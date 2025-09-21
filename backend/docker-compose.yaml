@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Сервис нашего Go-приложения
+  app:
+    build: . # Указывает Docker Compose собрать образ из Dockerfile в текущей директории
+    container_name: digital_forest_app
+    restart: on-failure
+    env_file:
+      - ./.env # Пробрасывает переменные из .env в контейнер
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy # Запускает 'app' только после того, как 'postgres' будет готов
+
+  # Сервис базы данных PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: digital_forest_db
+    restart: always
+    env_file:
+      - ./.env # Использует переменные для создания пользователя, пароля и БД
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data: # Создает именованный том для хранения данных БД

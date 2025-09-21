@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: "Digital Forest API"
+  version: "1.0.0"
+paths:
+  /plants:
+    post:
+      summary: Создать новое растение
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlantRequest'
+      responses:
+        '201':
+          description: Растение успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantResponse'
+  /plants/random:
+    get:
+      summary: Получить случайный набор растений
+      parameters:
+        - name: count
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Список растений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlantResponse'
+
+components:
+  schemas:
+    CreatePlantRequest:
+      type: object
+      properties:
+        author:
+          type: string
+        imageData:
+          type: string
+          format: byte
+      required: [author, imageData]
+
+    PlantResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        author:
+          type: string
+        imageData:
+          type: string
+          format: byte
+        createdAt:
+          type: string
+          format: date-time
