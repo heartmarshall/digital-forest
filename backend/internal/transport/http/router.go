@@ -7,13 +7,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
 	"github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers"
 	"github.com/heartmarshall/digital-forest/backend/internal/usecase"
 )
 
 // NewRouter создает новый роутер, регистрирует все маршруты и middleware.
 func NewRouter(uc *usecase.PlantUseCase) http.Handler {
-	handler := handlers.NewPlantHandler(uc)
+	// Создаем экземпляр валидатора
+	validator := NewValidator()
+
+	// Передаем валидатор в конструктор хендлера
+	handler := handlers.NewPlantHandler(uc, validator)
 
 	router := chi.NewRouter()
 

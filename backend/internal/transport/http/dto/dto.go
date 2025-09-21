@@ -7,10 +7,10 @@ import (
 )
 
 // CreatePlantRequest - DTO для запроса на создание растения.
-// Теги `json:"..."` используются для сериализации/десериализации.
+// Теги `validate` используются библиотекой go-playground/validator.
 type CreatePlantRequest struct {
-	Author    string `json:"author"`
-	ImageData string `json:"imageData"`
+	Author    string `json:"author" validate:"required,max=255"`
+	ImageData string `json:"imageData" validate:"required"`
 }
 
 // PlantResponse - DTO для ответа клиенту.

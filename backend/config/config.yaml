@@ -2,5 +2,9 @@ http:
   port: "8080"
 
 postgres:
-  # Важно: 'postgres' - это имя сервиса в будущем docker-compose.yaml
-  url: "postgres://user:password@postgres:5432/digital_forest?sslmode=disable"
+  host: "postgres"
+  port: "5432"
+  user: "user"
+  password: "password"
+  dbname: "digital_forest"
+  sslmode: "disable"

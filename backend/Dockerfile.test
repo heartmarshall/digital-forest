@@ -1,0 +1,44 @@
+# Dockerfile for testing
+FROM golang:1.21-alpine AS builder
+
+# Install dependencies
+RUN apk add --no-cache git make
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN go build -o bin/app ./cmd/app
+
+# Test stage
+FROM golang:1.21-alpine AS test
+
+# Install dependencies
+RUN apk add --no-cache git make
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Create coverage directory
+RUN mkdir -p coverage
+
+# Default command runs tests
+CMD ["make", "test-coverage"]

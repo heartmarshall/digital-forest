@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>plant: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/heartmarshall/digital-forest/backend/internal/repository/plant/plant_postgres.go (76.0%)</option>
+				
+				<option value="file1">github.com/heartmarshall/digital-forest/backend/internal/transport/http/dto/dto.go (100.0%)</option>
+				
+				<option value="file2">github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers/plant_handler.go (92.5%)</option>
+				
+				<option value="file3">github.com/heartmarshall/digital-forest/backend/internal/usecase/plant_usecase.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package plant
+
+import (
+        "context"
+        "fmt"
+
+        sq "github.com/Masterminds/squirrel"
+        "github.com/jackc/pgx/v5/pgxpool"
+
+        // Убедись, что путь импорта соответствует имени твоего Go-модуля
+        domain "github.com/heartmarshall/digital-forest/backend/internal/domain/plant"
+)
+
+// PlantRepo - это реализация usecase.PlantRepository для работы с PostgreSQL.
+type PlantRepo struct {
+        db *pgxpool.Pool
+}
+
+// NewPlantRepo - конструктор для репозитория.
+// Принимает пул соединений с базой данных в качестве зависимости.
+func NewPlantRepo(db *pgxpool.Pool) *PlantRepo <span class="cov8" title="1">{
+        return &amp;PlantRepo{db: db}
+}</span>
+
+// Create реализует метод интерфейса usecase.PlantRepository.
+// Он вставляет новую запись о растении в таблицу "plants".
+func (r *PlantRepo) Create(ctx context.Context, plant domain.Plant) (domain.Plant, error) <span class="cov8" title="1">{
+        sql, args, err := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
+                Insert("plants").
+                Columns("author", "image_data", "created_at").
+                Values(plant.Author, plant.ImageData, plant.CreatedAt).
+                Suffix("RETURNING id, author, image_data, created_at"). // Возвращаем все поля
+                ToSql()
+        if err != nil </span><span class="cov0" title="0">{
+                return domain.Plant{}, fmt.Errorf("PlantRepo - Create - ToSql: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var createdPlant domain.Plant
+        err = r.db.QueryRow(ctx, sql, args...).Scan(
+                &amp;createdPlant.ID,
+                &amp;createdPlant.Author,
+                &amp;createdPlant.ImageData,
+                &amp;createdPlant.CreatedAt,
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return domain.Plant{}, fmt.Errorf("PlantRepo - Create - QueryRow.Scan: %w", err)
+        }</span>
+        <span class="cov8" title="1">return createdPlant, nil</span>
+}
+
+// GetRandom реализует метод интерфейса usecase.PlantRepository.
+// Он извлекает случайные записи из таблицы "plants".
+func (r *PlantRepo) GetRandom(ctx context.Context, count int) ([]domain.Plant, error) <span class="cov8" title="1">{
+        sql, args, err := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
+                Select("id", "author", "image_data", "created_at").
+                From("plants").
+                OrderBy("RANDOM()"). // ORDER BY RANDOM() - простой, но потенциально медленный способ для очень больших таблиц.
+                Limit(uint64(count)).
+                ToSql()
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("PlantRepo - GetRandom - ToSql: %w", err)
+        }</span>
+
+        // Выполняем запрос для получения нескольких строк.
+        <span class="cov8" title="1">rows, err := r.db.Query(ctx, sql, args...)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("PlantRepo - GetRandom - Query: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer rows.Close()
+
+        plants := make([]domain.Plant, 0, count)
+
+        // Итерируемся по результатам и сканируем каждую строку в структуру domain.Plant.
+        for rows.Next() </span><span class="cov8" title="1">{
+                var p domain.Plant
+                if err := rows.Scan(&amp;p.ID, &amp;p.Author, &amp;p.ImageData, &amp;p.CreatedAt); err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("PlantRepo - GetRandom - rows.Scan: %w", err)
+                }</span>
+                <span class="cov8" title="1">plants = append(plants, p)</span>
+        }
+
+        // Проверяем на наличие ошибок, которые могли возникнуть во время итерации.
+        <span class="cov8" title="1">if err := rows.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("PlantRepo - GetRandom - rows.Err: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return plants, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package dto
+
+import (
+        "time"
+
+        domain "github.com/heartmarshall/digital-forest/backend/internal/domain/plant"
+)
+
+// CreatePlantRequest - DTO для запроса на создание растения.
+// Теги `validate` используются библиотекой go-playground/validator.
+type CreatePlantRequest struct {
+        Author    string `json:"author" validate:"required,max=255"`
+        ImageData string `json:"imageData" validate:"required"`
+}
+
+// PlantResponse - DTO для ответа клиенту.
+// Мы отделяем эту структуру от доменной, чтобы иметь полный контроль
+// над тем, как наши данные выглядят в API.
+type PlantResponse struct {
+        ID        int       `json:"id"`
+        Author    string    `json:"author"`
+        ImageData string    `json:"imageData"`
+        CreatedAt time.Time `json:"createdAt"`
+}
+
+// ToPlantResponse преобразует доменную модель в DTO для ответа.
+func ToPlantResponse(p domain.Plant) PlantResponse <span class="cov8" title="1">{
+        return PlantResponse{
+                ID:        p.ID,
+                Author:    p.Author,
+                ImageData: p.ImageData,
+                CreatedAt: p.CreatedAt,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handlers
+
+import (
+        "context"
+        "encoding/json"
+        "net/http"
+        "strconv"
+
+        domain "github.com/heartmarshall/digital-forest/backend/internal/domain/plant"
+        "github.com/heartmarshall/digital-forest/backend/internal/transport/http/dto"
+)
+
+const defaultRandomCount = 15
+const maxRandomCount = 50
+
+// Validator - интерфейс для нашей утилиты валидации.
+type Validator interface {
+        ValidateStruct(s interface{}) map[string]string
+}
+
+// plantUseCase - это интерфейс, который ОПРЕДЕЛЯЕТСЯ транспортным слоем (потребителем).
+type plantUseCase interface {
+        Create(ctx context.Context, author, imageData string) (domain.Plant, error)
+        GetRandom(ctx context.Context, count int) ([]domain.Plant, error)
+}
+
+// PlantHandler - это наш HTTP обработчик.
+type PlantHandler struct {
+        uc        plantUseCase
+        validator Validator
+}
+
+// NewPlantHandler - конструктор для хендлера.
+func NewPlantHandler(uc plantUseCase, validator Validator) *PlantHandler <span class="cov8" title="1">{
+        return &amp;PlantHandler{
+                uc:        uc,
+                validator: validator,
+        }
+}</span>
+
+// CreatePlant - обработчик для POST /v1/plants
+func (h *PlantHandler) CreatePlant(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var req dto.CreatePlantRequest
+        if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil </span><span class="cov8" title="1">{
+                respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON format"})
+                return
+        }</span>
+
+        // Выполняем автоматическую валидацию
+        <span class="cov8" title="1">if validationErrors := h.validator.ValidateStruct(req); validationErrors != nil </span><span class="cov8" title="1">{
+                respondJSON(w, http.StatusBadRequest, validationErrors)
+                return
+        }</span>
+
+        // Создаем растение через use case
+        <span class="cov8" title="1">plant, err := h.uc.Create(r.Context(), req.Author, req.ImageData)
+        if err != nil </span><span class="cov8" title="1">{
+                // В реальном приложении здесь можно добавить более детальную обработку ошибок
+                respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create plant"})
+                return
+        }</span>
+
+        // Преобразуем доменную модель в DTO для ответа
+        <span class="cov8" title="1">response := dto.ToPlantResponse(plant)
+        respondJSON(w, http.StatusCreated, response)</span>
+}
+
+// GetRandomPlants - обработчик для GET /v1/plants/random
+func (h *PlantHandler) GetRandomPlants(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        countStr := r.URL.Query().Get("count")
+        count := defaultRandomCount
+
+        if countStr != "" </span><span class="cov8" title="1">{
+                var err error
+                count, err = strconv.Atoi(countStr)
+                if err != nil || count &lt;= 0 </span><span class="cov8" title="1">{
+                        respondJSON(w, http.StatusBadRequest, map[string]string{
+                                "error": "Invalid count parameter. Must be a positive integer",
+                        })
+                        return
+                }</span>
+
+                <span class="cov8" title="1">if count &gt; maxRandomCount </span><span class="cov8" title="1">{
+                        count = maxRandomCount
+                }</span>
+        }
+
+        <span class="cov8" title="1">plants, err := h.uc.GetRandom(r.Context(), count)
+        if err != nil </span><span class="cov8" title="1">{
+                respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to get random plants"})
+                return
+        }</span>
+
+        <span class="cov8" title="1">responses := make([]dto.PlantResponse, len(plants))
+        for i, plant := range plants </span><span class="cov8" title="1">{
+                responses[i] = dto.ToPlantResponse(plant)
+        }</span>
+
+        <span class="cov8" title="1">respondJSON(w, http.StatusOK, map[string]interface{}{
+                "plants": responses,
+                "count":  len(responses),
+        })</span>
+}
+
+// respondJSON - хелпер для отправки JSON-ответов.
+func respondJSON(w http.ResponseWriter, status int, payload interface{}) <span class="cov8" title="1">{
+        response, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                w.WriteHeader(http.StatusInternalServerError)
+                w.Write([]byte(err.Error()))
+                return
+        }</span>
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        w.Write(response)</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package usecase
+
+import (
+        "context"
+        "time"
+
+        // Убедись, что путь импорта соответствует имени твоего Go-модуля
+        domain "github.com/heartmarshall/digital-forest/backend/internal/domain/plant"
+)
+
+// PlantUseCase - это конкретная реализация бизнес-логики для работы с "растениями".
+// Он инкапсулирует все сценарии использования, связанные с этой сущностью.
+type PlantUseCase struct {
+        repo PlantRepository
+}
+
+// NewPlantUseCase - это конструктор для PlantUseCase.
+// Он принимает PlantRepository в качестве зависимости и возвращает указатель
+// на конкретную структуру *PlantUseCase.
+func NewPlantUseCase(r PlantRepository) *PlantUseCase <span class="cov8" title="1">{
+        return &amp;PlantUseCase{repo: r}
+}</span>
+
+// Create - это сценарий использования для создания нового растения.
+// Он принимает базовые данные, формирует из них доменную модель Plant
+// и передает ее в репозиторий для сохранения.
+func (uc *PlantUseCase) Create(ctx context.Context, author, imageData string) (domain.Plant, error) <span class="cov8" title="1">{
+        // Здесь в будущем могла бы быть бизнес-валидация.
+        // Например, проверка imageData на корректность формата,
+        // или проверка имени автора на наличие в черном списке.
+
+        plant := domain.Plant{
+                Author:    author,
+                ImageData: imageData,
+                CreatedAt: time.Now().UTC(),
+        }
+
+        createdPlant, err := uc.repo.Create(ctx, plant)
+        if err != nil </span><span class="cov8" title="1">{
+                return domain.Plant{}, err
+        }</span>
+        <span class="cov8" title="1">return createdPlant, nil</span>
+}
+
+func (uc *PlantUseCase) GetRandom(ctx context.Context, count int) ([]domain.Plant, error) <span class="cov8" title="1">{
+
+        plants, err := uc.repo.GetRandom(ctx, count)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return plants, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

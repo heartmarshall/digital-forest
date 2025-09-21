@@ -14,7 +14,12 @@ type Config struct {
 		Port string `mapstructure:"port"`
 	} `mapstructure:"http"`
 	Postgres struct {
-		URL string `mapstructure:"url"`
+		Host     string `mapstructure:"host"`
+		Port     string `mapstructure:"port"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+		DBName   string `mapstructure:"dbname"`
+		SSLMode  string `mapstructure:"sslmode"`
 	} `mapstructure:"postgres"`
 }
 
@@ -35,7 +40,7 @@ func New() (*Config, error) {
 	}
 
 	// 3. Настройка возможности переопределения через переменные окружения.
-	// Например, HTTP_PORT переопределит cfg.HTTP.Port
+	// Например, POSTGRES_HOST переопределит cfg.Postgres.Host
 	vp.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	vp.AutomaticEnv()
 

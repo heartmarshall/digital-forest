@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	domain "github.com/heartmarshall/digital-forest/backend/internal/domain/plant"
 	"github.com/heartmarshall/digital-forest/backend/internal/transport/http/dto"
@@ -14,8 +13,12 @@ import (
 const defaultRandomCount = 15
 const maxRandomCount = 50
 
+// Validator - интерфейс для нашей утилиты валидации.
+type Validator interface {
+	ValidateStruct(s interface{}) map[string]string
+}
+
 // plantUseCase - это интерфейс, который ОПРЕДЕЛЯЕТСЯ транспортным слоем (потребителем).
-// Он описывает, какие методы бизнес-логики нужны этому слою для работы.
 type plantUseCase interface {
 	Create(ctx context.Context, author, imageData string) (domain.Plant, error)
 	GetRandom(ctx context.Context, count int) ([]domain.Plant, error)
@@ -23,45 +26,29 @@ type plantUseCase interface {
 
 // PlantHandler - это наш HTTP обработчик.
 type PlantHandler struct {
-	uc plantUseCase
+	uc        plantUseCase
+	validator Validator
 }
 
 // NewPlantHandler - конструктор для хендлера.
-func NewPlantHandler(uc plantUseCase) *PlantHandler {
-	return &PlantHandler{uc: uc}
+func NewPlantHandler(uc plantUseCase, validator Validator) *PlantHandler {
+	return &PlantHandler{
+		uc:        uc,
+		validator: validator,
+	}
 }
 
-// createPlant - обработчик для POST /plants
+// CreatePlant - обработчик для POST /v1/plants
 func (h *PlantHandler) CreatePlant(w http.ResponseWriter, r *http.Request) {
-	// Проверяем метод запроса
-	if r.Method != http.MethodPost {
-		respondJSON(w, http.StatusMethodNotAllowed, map[string]string{
-			"error": "Method not allowed",
-		})
-		return
-	}
-
-	// Парсим JSON из тела запроса
 	var req dto.CreatePlantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "Invalid JSON format",
-		})
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON format"})
 		return
 	}
 
-	// Валидируем входные данные
-	if strings.TrimSpace(req.Author) == "" {
-		respondJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "Author is required",
-		})
-		return
-	}
-
-	if strings.TrimSpace(req.ImageData) == "" {
-		respondJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "ImageData is required",
-		})
+	// Выполняем автоматическую валидацию
+	if validationErrors := h.validator.ValidateStruct(req); validationErrors != nil {
+		respondJSON(w, http.StatusBadRequest, validationErrors)
 		return
 	}
 
@@ -69,9 +56,7 @@ func (h *PlantHandler) CreatePlant(w http.ResponseWriter, r *http.Request) {
 	plant, err := h.uc.Create(r.Context(), req.Author, req.ImageData)
 	if err != nil {
 		// В реальном приложении здесь можно добавить более детальную обработку ошибок
-		respondJSON(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to create plant",
-		})
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create plant"})
 		return
 	}
 
@@ -80,17 +65,8 @@ func (h *PlantHandler) CreatePlant(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, response)
 }
 
-// getRandomPlants - обработчик для GET /plants/random
+// GetRandomPlants - обработчик для GET /v1/plants/random
 func (h *PlantHandler) GetRandomPlants(w http.ResponseWriter, r *http.Request) {
-	// Проверяем метод запроса
-	if r.Method != http.MethodGet {
-		respondJSON(w, http.StatusMethodNotAllowed, map[string]string{
-			"error": "Method not allowed",
-		})
-		return
-	}
-
-	// Получаем параметр count из query string
 	countStr := r.URL.Query().Get("count")
 	count := defaultRandomCount
 
@@ -104,22 +80,17 @@ func (h *PlantHandler) GetRandomPlants(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Ограничиваем максимальное количество
 		if count > maxRandomCount {
 			count = maxRandomCount
 		}
 	}
 
-	// Получаем случайные растения через use case
 	plants, err := h.uc.GetRandom(r.Context(), count)
 	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, map[string]string{
-			"error": "Failed to get random plants",
-		})
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to get random plants"})
 		return
 	}
 
-	// Преобразуем доменные модели в DTO для ответа
 	responses := make([]dto.PlantResponse, len(plants))
 	for i, plant := range plants {
 		responses[i] = dto.ToPlantResponse(plant)

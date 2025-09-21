@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os/signal"
@@ -30,7 +31,17 @@ func main() {
 	}
 
 	// 2. Подключение к базе данных
-	dbPool, err := pgxpool.New(ctx, cfg.Postgres.URL)
+	// Собираем DSN (Data Source Name) из отдельных полей конфигурации.
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		cfg.Postgres.User,
+		cfg.Postgres.Password,
+		cfg.Postgres.Host,
+		cfg.Postgres.Port,
+		cfg.Postgres.DBName,
+		cfg.Postgres.SSLMode,
+	)
+
+	dbPool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
