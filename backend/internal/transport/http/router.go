@@ -8,17 +8,20 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers"
-	"github.com/heartmarshall/digital-forest/backend/internal/usecase"
+	createHandler "github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers/plant/create"
+	getRandomHandler "github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers/plant/get_random"
+	createUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/create"
+	getRandomUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/get_random"
 )
 
 // NewRouter создает новый роутер, регистрирует все маршруты и middleware.
-func NewRouter(uc *usecase.PlantUseCase) http.Handler {
+func NewRouter(createUC *createUseCase.CreateUseCase, getRandomUC *getRandomUseCase.GetRandomUseCase) http.Handler {
 	// Создаем экземпляр валидатора
 	validator := NewValidator()
 
-	// Передаем валидатор в конструктор хендлера
-	handler := handlers.NewPlantHandler(uc, validator)
+	// Создаем handlers для каждого use case
+	createHandlerInstance := createHandler.NewCreateHandler(createUC, validator)
+	getRandomHandlerInstance := getRandomHandler.NewGetRandomHandler(getRandomUC)
 
 	router := chi.NewRouter()
 
@@ -41,8 +44,8 @@ func NewRouter(uc *usecase.PlantUseCase) http.Handler {
 
 	// Группа роутов для нашего API v1
 	router.Route("/v1", func(r chi.Router) {
-		r.Post("/plants", handler.CreatePlant)
-		r.Get("/plants/random", handler.GetRandomPlants)
+		r.Post("/plants", createHandlerInstance.CreatePlant)
+		r.Get("/plants/random", getRandomHandlerInstance.GetRandomPlants)
 	})
 
 	return router

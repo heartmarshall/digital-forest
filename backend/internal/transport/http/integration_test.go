@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/heartmarshall/digital-forest/backend/internal/repository/plant"
+	"github.com/heartmarshall/digital-forest/backend/internal/repository/postgres"
 	"github.com/heartmarshall/digital-forest/backend/internal/testutil"
 	"github.com/heartmarshall/digital-forest/backend/internal/transport/http/dto"
-	"github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers"
-	"github.com/heartmarshall/digital-forest/backend/internal/usecase"
+	createHandler "github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers/plant/create"
+	getRandomHandler "github.com/heartmarshall/digital-forest/backend/internal/transport/http/handlers/plant/get_random"
+	createUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/create"
+	getRandomUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/get_random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,16 +54,18 @@ func TestHTTPIntegration(t *testing.T) {
 	defer testutil.CleanupTestDB(t, dbPool, container)
 
 	// Setup dependencies
-	plantRepo := plant.NewPlantRepo(dbPool)
-	plantUseCase := usecase.NewPlantUseCase(plantRepo)
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	createUC := createUseCase.NewCreateUseCase(plantRepo)
+	getRandomUC := getRandomUseCase.NewGetRandomUseCase(plantRepo)
 	validator := &mockValidator{}
 
 	// Create a new chi router for testing
 	router := chi.NewRouter()
-	plantHandler := handlers.NewPlantHandler(plantUseCase, validator)
+	createHandlerInstance := createHandler.NewCreateHandler(createUC, validator)
+	getRandomHandlerInstance := getRandomHandler.NewGetRandomHandler(getRandomUC)
 	router.Route("/v1/plants", func(r chi.Router) {
-		r.Post("/", plantHandler.CreatePlant)
-		r.Get("/random", plantHandler.GetRandomPlants)
+		r.Post("/", createHandlerInstance.CreatePlant)
+		r.Get("/random", getRandomHandlerInstance.GetRandomPlants)
 	})
 
 	t.Run("full API workflow", func(t *testing.T) {
@@ -193,16 +197,18 @@ func TestHTTPIntegrationConcurrency(t *testing.T) {
 	dbPool, _, container := testutil.SetupTestDB(t)
 	defer testutil.CleanupTestDB(t, dbPool, container)
 
-	plantRepo := plant.NewPlantRepo(dbPool)
-	plantUseCase := usecase.NewPlantUseCase(plantRepo)
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	createUC := createUseCase.NewCreateUseCase(plantRepo)
+	getRandomUC := getRandomUseCase.NewGetRandomUseCase(plantRepo)
 	validator := &mockValidator{}
 
 	// Create a new chi router for testing
 	router := chi.NewRouter()
-	plantHandler := handlers.NewPlantHandler(plantUseCase, validator)
+	createHandlerInstance := createHandler.NewCreateHandler(createUC, validator)
+	getRandomHandlerInstance := getRandomHandler.NewGetRandomHandler(getRandomUC)
 	router.Route("/v1/plants", func(r chi.Router) {
-		r.Post("/", plantHandler.CreatePlant)
-		r.Get("/random", plantHandler.GetRandomPlants)
+		r.Post("/", createHandlerInstance.CreatePlant)
+		r.Get("/random", getRandomHandlerInstance.GetRandomPlants)
 	})
 
 	t.Run("concurrent requests", func(t *testing.T) {

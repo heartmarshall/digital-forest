@@ -13,9 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/heartmarshall/digital-forest/backend/internal/config"
-	"github.com/heartmarshall/digital-forest/backend/internal/repository/plant"
+	"github.com/heartmarshall/digital-forest/backend/internal/repository/postgres"
 	transportHTTP "github.com/heartmarshall/digital-forest/backend/internal/transport/http"
-	"github.com/heartmarshall/digital-forest/backend/internal/usecase"
+	createUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/create"
+	getRandomUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/get_random"
 )
 
 func main() {
@@ -56,9 +57,10 @@ func main() {
 
 	// 3. Сборка всех зависимостей (Dependency Injection)
 	// Идем "изнутри наружу": Repository -> UseCase -> Handler -> Router
-	plantRepo := plant.NewPlantRepo(dbPool)
-	plantUseCase := usecase.NewPlantUseCase(plantRepo)
-	router := transportHTTP.NewRouter(plantUseCase) // Роутер создается с зависимостью от use case
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	createUC := createUseCase.NewCreateUseCase(plantRepo)
+	getRandomUC := getRandomUseCase.NewGetRandomUseCase(plantRepo)
+	router := transportHTTP.NewRouter(createUC, getRandomUC) // Роутер создается с зависимостями от use cases
 
 	// 4. Настройка и запуск HTTP-сервера
 	server := &http.Server{

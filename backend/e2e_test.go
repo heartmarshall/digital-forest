@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heartmarshall/digital-forest/backend/internal/repository/plant"
+	"github.com/heartmarshall/digital-forest/backend/internal/repository/postgres"
 	"github.com/heartmarshall/digital-forest/backend/internal/testutil"
-	"github.com/heartmarshall/digital-forest/backend/internal/usecase"
+	createUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/create"
+	getRandomUseCase "github.com/heartmarshall/digital-forest/backend/internal/usecase/plant/get_random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +25,9 @@ func NewTestServer(t *testing.T) *TestServer {
 	dbPool, _, _ := testutil.SetupTestDB(t)
 
 	// Setup dependencies
-	plantRepo := plant.NewPlantRepo(dbPool)
-	_ = usecase.NewPlantUseCase(plantRepo)
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	_ = createUseCase.NewCreateUseCase(plantRepo)
+	_ = getRandomUseCase.NewGetRandomUseCase(plantRepo)
 
 	// In a real E2E test, you would start the actual HTTP server here
 	// For now, we'll just return a placeholder
@@ -42,14 +44,15 @@ func TestE2E_PlantWorkflow(t *testing.T) {
 	dbPool, _, container := testutil.SetupTestDB(t)
 	defer testutil.CleanupTestDB(t, dbPool, container)
 
-	plantRepo := plant.NewPlantRepo(dbPool)
-	plantUseCase := usecase.NewPlantUseCase(plantRepo)
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	createUC := createUseCase.NewCreateUseCase(plantRepo)
+	getRandomUC := getRandomUseCase.NewGetRandomUseCase(plantRepo)
 
 	t.Run("complete plant lifecycle", func(t *testing.T) {
 		ctx := context.Background()
 
 		// Step 1: Create a plant
-		plant, err := plantUseCase.Create(ctx, "e2e_author", "e2e_image_data")
+		plant, err := createUC.Create(ctx, "e2e_author", "e2e_image_data")
 		require.NoError(t, err)
 		assert.NotZero(t, plant.ID)
 		assert.Equal(t, "e2e_author", plant.Author)
@@ -57,12 +60,12 @@ func TestE2E_PlantWorkflow(t *testing.T) {
 
 		// Step 2: Create more plants
 		for i := 0; i < 5; i++ {
-			_, err := plantUseCase.Create(ctx, fmt.Sprintf("author_%d", i), fmt.Sprintf("data_%d", i))
+			_, err := createUC.Create(ctx, fmt.Sprintf("author_%d", i), fmt.Sprintf("data_%d", i))
 			require.NoError(t, err)
 		}
 
 		// Step 3: Get random plants
-		randomPlants, err := plantUseCase.GetRandom(ctx, 3)
+		randomPlants, err := getRandomUC.GetRandom(ctx, 3)
 		require.NoError(t, err)
 		assert.Len(t, randomPlants, 3)
 
@@ -79,7 +82,7 @@ func TestE2E_PlantWorkflow(t *testing.T) {
 		ctx := context.Background()
 
 		// Test with empty author (this should be handled by validation in real app)
-		_, err := plantUseCase.Create(ctx, "", "valid_data")
+		_, err := createUC.Create(ctx, "", "valid_data")
 		// Note: In the current implementation, this won't fail at use case level
 		// but would fail at validation level in the HTTP handler
 		assert.NoError(t, err) // Current implementation allows empty author
@@ -91,14 +94,14 @@ func TestE2E_PlantWorkflow(t *testing.T) {
 		// Create many plants quickly
 		start := time.Now()
 		for i := 0; i < 100; i++ {
-			_, err := plantUseCase.Create(ctx, fmt.Sprintf("perf_author_%d", i), fmt.Sprintf("perf_data_%d", i))
+			_, err := createUC.Create(ctx, fmt.Sprintf("perf_author_%d", i), fmt.Sprintf("perf_data_%d", i))
 			require.NoError(t, err)
 		}
 		creationTime := time.Since(start)
 
 		// Get random plants
 		start = time.Now()
-		plants, err := plantUseCase.GetRandom(ctx, 50)
+		plants, err := getRandomUC.GetRandom(ctx, 50)
 		require.NoError(t, err)
 		retrievalTime := time.Since(start)
 
@@ -147,18 +150,19 @@ func TestE2E_DataConsistency(t *testing.T) {
 	dbPool, _, container := testutil.SetupTestDB(t)
 	defer testutil.CleanupTestDB(t, dbPool, container)
 
-	plantRepo := plant.NewPlantRepo(dbPool)
-	plantUseCase := usecase.NewPlantUseCase(plantRepo)
+	plantRepo := postgres.NewPlantRepo(dbPool)
+	createUC := createUseCase.NewCreateUseCase(plantRepo)
+	getRandomUC := getRandomUseCase.NewGetRandomUseCase(plantRepo)
 
 	t.Run("data integrity", func(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a plant
-		originalPlant, err := plantUseCase.Create(ctx, "integrity_author", "integrity_data")
+		originalPlant, err := createUC.Create(ctx, "integrity_author", "integrity_data")
 		require.NoError(t, err)
 
 		// Get random plants and verify the created plant is among them
-		randomPlants, err := plantUseCase.GetRandom(ctx, 10)
+		randomPlants, err := getRandomUC.GetRandom(ctx, 10)
 		require.NoError(t, err)
 
 		found := false
@@ -182,7 +186,7 @@ func TestE2E_DataConsistency(t *testing.T) {
 
 		for i := 0; i < 10; i++ {
 			go func(i int) {
-				_, err := plantUseCase.Create(ctx, fmt.Sprintf("concurrent_author_%d", i), fmt.Sprintf("concurrent_data_%d", i))
+				_, err := createUC.Create(ctx, fmt.Sprintf("concurrent_author_%d", i), fmt.Sprintf("concurrent_data_%d", i))
 				if err != nil {
 					errors <- err
 					return
@@ -205,7 +209,7 @@ func TestE2E_DataConsistency(t *testing.T) {
 		}
 
 		// Verify all plants were created
-		plants, err := plantUseCase.GetRandom(ctx, 15)
+		plants, err := getRandomUC.GetRandom(ctx, 15)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, len(plants), 10)
 	})
