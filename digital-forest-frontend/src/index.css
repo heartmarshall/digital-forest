@@ -1,0 +1,71 @@
+/* src/index.css */
+:root {
+  /* === Шрифты === */
+  --font-pixel-title: 'Press Start 2P', cursive;
+  --font-pixel-text: 'VT323', monospace;
+
+  /* === Цветовая палитра Clean Pixel === */
+  --color-background: #F0F8F0; /* Очень светлый мятно-зеленый */
+  --color-text-dark: #1A3A1A; /* Глубокий темно-зеленый */
+  --color-accent-yellow: #FFD700; /* Теплый ретро-желтый */
+  --color-accent-yellow-dark: #E6C200; /* Темнее для hover */
+  --color-ground: #2D5A2D; /* Насыщенно-зеленый для земли */
+  --color-tooltip-bg: #1A3A1A; /* Черный прямоугольник */
+  --color-tooltip-text: #F0F8F0; /* Светло-мятный текст */
+
+  /* === Другое === */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
+  font-family: var(--font-pixel-text);
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+h1, h2 {
+  font-family: var(--font-pixel-title);
+  font-weight: 400; /* Убираем жирность, пиксельные шрифты не любят ее */
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 3.2rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+button {
+  font-family: var(--font-pixel-text);
+  font-size: 1.5rem;
+  border-radius: 0;
+  border: 3px solid var(--color-text-dark);
+  background-color: var(--color-accent-yellow);
+  cursor: pointer;
+  padding: 12px 24px;
+  transition: all 0.1s ease-in-out;
+  box-shadow: 4px 4px 0px var(--color-text-dark);
+  text-transform: none;
+  font-weight: normal;
+}
+
+button:hover {
+  background-color: var(--color-accent-yellow-dark);
+  box-shadow: 2px 2px 0px var(--color-text-dark);
+  transform: translate(2px, 2px);
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}

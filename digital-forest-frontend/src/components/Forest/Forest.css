@@ -1,0 +1,110 @@
+/* src/components/Forest/Forest.css */
+.forest-status {
+  padding: 40px;
+  text-align: center;
+  font-size: 1.5rem;
+  color: #555;
+}
+
+.forest-status.error {
+  color: #d9534f;
+}
+
+.forest-status.empty {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.forest-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: var(--color-background);
+}
+
+.forest-viewport {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-height: 500px;
+  /* Позволяем видеть инфо-блок, который вылез за пределы */
+  overflow: visible;
+}
+
+.forest-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  /* ВАЖНО: overflow-y должен быть visible, чтобы видеть инфо-блок */
+  overflow-y: visible;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.forest-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+.forest-content {
+  display: flex;
+  align-items: flex-end; 
+  gap: 30px;
+  /* Увеличиваем нижний padding, чтобы "утопить" растения */
+  padding: 0 80px 100px 80px; 
+  width: max-content; 
+  min-height: 400px; 
+  position: relative;
+}
+
+/* "Земля" теперь поверх растений */
+.forest-content::after {
+  content: '';
+  position: absolute;
+  /* Позиционируем "землю" на 80px от низа, где заканчивается padding */
+  bottom: 80px; 
+  left: 0;
+  right: 0;
+  height: 20px; /* Делаем землю толще для наглядности */
+  background: #7ab87a;
+  border-bottom: 2px solid #1A3A1A;
+  /* z-index ВЫШЕ, чем у растений */
+  z-index: 20;
+  /* Добавляем тень для объема */
+}
+
+.forest-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  background-color: var(--color-background);
+}
+
+.scroll-arrow {
+  font-family: var(--font-pixel-text);
+  font-size: 2rem;
+  border-radius: 0;
+  border: 3px solid var(--color-text-dark);
+  background-color: var(--color-accent-yellow);
+  cursor: pointer;
+  padding: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 0;
+  transition: all 0.1s ease-in-out;
+  box-shadow: 4px 4px 0px var(--color-text-dark);
+  color: var(--color-text-dark);
+}
+
+.scroll-arrow:hover {
+  background-color: var(--color-accent-yellow-dark);
+  transform: translate(2px, 2px);
+  opacity: 1;
+}
+/* Добавляем индикатор прокрутки */

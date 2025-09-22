@@ -1,26 +1,29 @@
-version: '3.8'
+# Старая версия `version` не нужна, как подсказал Docker, можно убрать
+# version: '3.8' 
 
 services:
-  # Сервис нашего Go-приложения
   app:
-    build: . # Указывает Docker Compose собрать образ из Dockerfile в текущей директории
+    build: .
     container_name: digital_forest_app
     restart: on-failure
     env_file:
-      - ./.env # Пробрасывает переменные из .env в контейнер
+      - ./.env
     ports:
       - "8080:8080"
     depends_on:
       postgres:
-        condition: service_healthy # Запускает 'app' только после того, как 'postgres' будет готов
+        condition: service_healthy
+    # --- ДОБАВЛЕНО ---
+    # Указываем, что этот сервис должен быть подключен к нашей кастомной сети
+    networks:
+      - digital_forest_net
 
-  # Сервис базы данных PostgreSQL
   postgres:
     image: postgres:15-alpine
     container_name: digital_forest_db
     restart: always
     env_file:
-      - ./.env # Использует переменные для создания пользователя, пароля и БД
+      - ./.env
     ports:
       - "5432:5432"
     volumes:
@@ -30,6 +33,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # --- ДОБАВЛЕНО ---
+    # Этот сервис тоже подключаем к той же сети
+    networks:
+      - digital_forest_net
 
 volumes:
-  postgres-data: # Создает именованный том для хранения данных БД
+  postgres-data:
+
+# --- ДОБАВЛЕН ЦЕЛЫЙ БЛОК ---
+# Здесь мы описываем нашу кастомную сеть
+networks:
+  digital_forest_net:
+    driver: bridge # Стандартный драйвер для создания виртуальной сети
+    ipam: # IP Address Management - управление IP-адресами
+      driver: default
+      config:
+        - subnet: 172.25.0.0/24 # Явно задаем подсеть. 
+                               # Мы выбрали диапазон, который вряд ли с чем-то конфликтует

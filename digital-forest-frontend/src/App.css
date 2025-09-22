@@ -1,0 +1,66 @@
+/* src/App.css */
+#root {
+  width: 100vw;
+  max-width: 100%;
+  padding: 0;
+  /* УБИРАЕМ ЭТУ СТРОКУ, чтобы она не обрезала наш info-box */
+  /* overflow-x: hidden; */ 
+  overflow-y: visible;
+}
+
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2rem 2.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--color-background);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-title {
+  text-align: left;
+}
+
+.app-header h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  margin: 0;
+  font-family: var(--font-pixel-title);
+  text-shadow: 2px 2px 0px var(--color-text-dark);
+}
+
+.app-header p {
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+  color: var(--color-text-dark);
+  margin: 0.5rem 0 0 0;
+  font-family: var(--font-pixel-text);
+}
+
+.add-plant-button {
+  margin-left: 3rem;
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  padding: 14px 28px;
+  background-color: var(--color-accent-yellow);
+  border: 3px solid var(--color-text-dark);
+  box-shadow: 4px 4px 0px var(--color-text-dark);
+  transition: all 0.1s ease-in-out;
+}
+
+.add-plant-button:hover {
+  background-color: var(--color-accent-yellow-dark);
+  box-shadow: 2px 2px 0px var(--color-text-dark);
+  transform: translate(2px, 2px);
+}

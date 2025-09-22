@@ -48,10 +48,10 @@ def collect_files_to_txt(directory_path, output_file_name):
 # 1. Укажите путь к директории, которую нужно обработать.
 #    Пример для Windows: 'C:\\Users\\ИмяПользователя\\Documents'
 #    Пример для macOS/Linux: '/home/ИмяПользователя/Documents'
-target_directory = '/home/alodi/playground/digital-forest/backend' 
+target_directory = '/home/alodi/playground/digital-forest/digital-forest-frontend copy/' 
 
 # 2. Укажите имя файла, в который будут собраны все данные.
-output_file = 'собранные_файлы.txt'
+output_file = 'собранные_файлы2.txt'
 
 # 3. Запуск функции.
 if target_directory != 'путь_к_вашей_директории':

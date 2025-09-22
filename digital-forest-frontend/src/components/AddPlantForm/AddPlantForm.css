@@ -1,0 +1,62 @@
+/* src/components/AddPlantForm/AddPlantForm.css */
+
+.add-plant-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid var(--color-ground);
+  }
+  
+.plant-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+  
+.plant-form input {
+  font-family: var(--font-pixel-text);
+  font-size: 1.3rem;
+  padding: 12px 16px;
+  border-radius: 0;
+  border: 3px solid var(--color-text-dark);
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
+  box-shadow: 2px 2px 0px var(--color-text-dark);
+}
+
+.plant-form input:focus {
+  outline: none;
+  border-color: var(--color-ground);
+  box-shadow: 2px 2px 0px var(--color-ground);
+}
+  
+.plant-form button {
+  padding: 12px 24px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  background-color: var(--color-accent-yellow);
+  border: 3px solid var(--color-text-dark);
+  box-shadow: 4px 4px 0px var(--color-text-dark);
+  transition: all 0.1s ease-in-out;
+}
+
+.plant-form button:hover {
+  background-color: var(--color-accent-yellow-dark);
+  box-shadow: 2px 2px 0px var(--color-text-dark);
+  transform: translate(2px, 2px);
+}
+
+.editor-controls {
+  margin-top: 15px;
+}
+
+.error-message { 
+  color: #d9534f; 
+  margin-top: 10px;
+  font-size: 1.2rem;
+  font-family: var(--font-pixel-text);
+  text-align: center;
+}
